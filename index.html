@@ -1,48 +1,21 @@
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>抄写助手（增强版）</title>
-<!-- TailwindCSS -->
+<!-- Tailwind CSS -->
 <script src="https://image.uc.cn/s/uae/g/3n/mos-production/0915/3.4.17.js"></script>
 <!-- Font Awesome -->
 <script src="https://image.uc.cn/s/uae/g/3n/mos-production/fontawesome-free-7.1.0-web/js/all.min.js"></script>
 <link href="https://image.uc.cn/s/uae/g/3n/mos-production/fontawesome-free-7.1.0-web/css/fontawesome.min.css" rel="stylesheet"/>
-<script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        dark: {
-                            900: '#121212',
-                            800: '#1e1e1e',
-                            700: '#2c2c2c',
-                            600: '#3a3a3a',
-                        },
-                        accent: {
-                            purple: '#7c3aed',
-                            blue: '#3b82f6',
-                            highlight: 'rgba(124, 58, 237, 0.2)'
-                        }
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    }
-                }
-            }
-        }
-    </script>
 <style>
-        /* Custom Scrollbar */
+        /* Custom Scrollbar for Webkit */
         ::-webkit-scrollbar {
             width: 8px;
-            height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #1e1e1e; 
+            background: #1f2937; 
         }
         ::-webkit-scrollbar-thumb {
             background: #4b5563; 
@@ -52,696 +25,959 @@
             background: #6b7280; 
         }
 
-        /* Base Styles */
-        body {
-            background-color: #121212;
-            color: #e5e7eb;
-            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
+        /* Smooth transitions */
+        .btn-transition {
+            transition: all 0.2s ease-in-out;
         }
-
-        /* Card & Input Styles */
-        .glass-card {
-            background-color: #1e1e1e;
-            border: 1px solid #333;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.16);
-            transition: all 0.3s ease;
-        }
-
-        .input-base {
-            background-color: #2c2c2c;
-            border: 1px solid #4b5563;
-            color: #fff;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .input-base:focus {
-            outline: none;
-            border-color: #7c3aed;
-            box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.3);
-        }
-
-        /* Sentence Highlight */
-        .sentence-item {
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.5rem;
-            border-left: 3px solid transparent;
-        }
-        .sentence-item.active {
-            background-color: rgba(124, 58, 237, 0.15); /* Soft Purple */
-            border-left-color: #7c3aed;
-            transform: translateX(4px);
-        }
-
-        /* Button Micro-interactions */
-        .btn-interact {
-            transition: transform 0.1s ease, background-color 0.2s;
-        }
-        .btn-interact:active {
+        .btn-transition:active {
             transform: scale(0.95);
         }
 
-        /* Range Slider Styling */
-        input[type=range] {
-            -webkit-appearance: none; 
-            background: transparent; 
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: #7c3aed;
-            cursor: pointer;
-            margin-top: -6px; 
-            box-shadow: 0 0 2px rgba(0,0,0,0.5);
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #4b5563;
-            border-radius: 2px;
+        /* Highlight Animation */
+        .sentence-item {
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         
-        /* Toast Notification */
-        #toast-container {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
-        }
-        .toast {
-            background-color: #333;
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            font-size: 0.9rem;
-            opacity: 0;
-            transform: translateY(-20px);
-            animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 2.7s;
-            border-left: 4px solid #7c3aed;
-        }
+        /* Toast Animation */
         @keyframes slideIn {
-            to { opacity: 1; transform: translateY(0); }
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
         @keyframes fadeOut {
-            to { opacity: 0; transform: translateY(-20px); }
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .toast-enter {
+            animation: slideIn 0.3s forwards;
+        }
+        .toast-exit {
+            animation: fadeOut 0.3s forwards;
+        }
+
+        /* Mode Tabs */
+        .mode-tab {
+            transition: all 0.2s ease;
+        }
+        .mode-tab.active {
+            background-color: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-8 px-4">
-<!-- Toast Container -->
-<div id="toast-container"></div>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col items-center py-8 px-4 selection:bg-indigo-500 selection:text-white">
 <!-- Main Container -->
-<main class="w-full max-w-4xl space-y-6">
+<main class="w-full max-w-3xl space-y-6">
 <!-- Header -->
 <header class="text-center space-y-2">
-<h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
-                抄写助手
-            </h1>
-<p class="text-gray-400 text-sm md:text-base">分句朗读 · 慢速跟读 · 键盘控制</p>
+<h1 class="text-3xl font-bold tracking-wide text-white">抄写助手</h1>
+<p class="text-gray-400 text-sm">分句朗读 · 慢速跟读 · 键盘控制</p>
 </header>
+
 <!-- Input Section -->
-<section class="glass-card rounded-xl p-6">
-<div class="flex justify-between items-center mb-3">
-<label class="text-sm font-medium text-gray-300">文章输入</label>
-<span class="text-xs text-gray-500" id="input-status">等待输入...</span>
-</div>
-<textarea class="input-base w-full h-40 rounded-lg p-4 text-base leading-relaxed resize-none" id="text-input" placeholder="可粘贴或输入文章..."></textarea>
-<div class="mt-4 flex justify-end">
-<button class="btn-interact bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-8 rounded-lg shadow-lg flex items-center gap-2" id="btn-start">
-<i class="fa-solid fa-play"></i> 开始朗读
-                </button>
-</div>
+<section class="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+    <!-- Mode Tabs -->
+    <div class="flex gap-2 mb-4 border-b border-gray-700 pb-2">
+        <button class="mode-tab px-4 py-2 text-sm rounded-t-lg bg-indigo-600 text-white border-b-2 border-indigo-600" data-mode="normal" id="tabNormal">
+            <i class="fas fa-pen mr-1"></i>普通模式
+        </button>
+        <button class="mode-tab px-4 py-2 text-sm rounded-t-lg text-gray-400 hover:text-white border-b-2 border-transparent" data-mode="ai" id="tabAI">
+            <i class="fas fa-robot mr-1"></i>AI分词模式
+        </button>
+    </div>
+
+    <!-- Input Area -->
+    <div class="relative">
+        <textarea class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-gray-100 placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none transition-all pr-24" id="articleInput" placeholder="可粘贴或输入文章..." rows="4"></textarea>
+        
+        <!-- Copy Prompt Button (visible only in AI mode) -->
+        <button class="absolute right-3 top-3 bg-purple-600 hover:bg-purple-500 text-white text-sm px-3 py-1.5 rounded-lg transition-colors hidden items-center gap-1" id="btnCopyPrompt">
+            <i class="fas fa-copy"></i> 复制提示词
+        </button>
+    </div>
+
+    <!-- AI Mode Helper Text -->
+    <div class="mt-3 text-sm text-gray-400 hidden" id="aiHelperText">
+        <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-700 space-y-2">
+            <p class="flex items-center gap-2 text-indigo-400">
+                <i class="fas fa-info-circle"></i>
+                <span>AI分词模式使用步骤：</span>
+            </p>
+            <ol class="list-decimal list-inside space-y-1 ml-2 text-gray-300">
+                <li>在输入框中 <span class="text-indigo-400">粘贴你要朗读的文章</span></li>
+                <li>点击右侧 <span class="text-purple-400">「复制提示词」</span> 按钮</li>
+                <li>将复制的提示词发给AI（如ChatGPT），AI会返回带标记的文章</li>
+                <li>把AI返回的结果 <span class="text-indigo-400">粘贴回输入框</span></li>
+                <li>点击 <span class="text-green-400">「开始朗读」</span> 即可按标记朗读</li>
+            </ol>
+            <p class="text-xs text-gray-500 mt-1 border-t border-gray-700 pt-2">
+                <i class="fas fa-tag mr-1"></i>标记说明：<span class="text-yellow-500">**</span> 词间停顿 · <span class="text-yellow-500">##</span> 分句/长停顿
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-4 flex justify-end">
+        <button class="btn-transition bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-6 rounded-lg shadow-md flex items-center gap-2" id="btnStart">
+            <i class="fas fa-play"></i> 开始朗读
+        </button>
+    </div>
 </section>
-<!-- Reading Display Area -->
-<section class="glass-card rounded-xl p-6 min-h-[300px] flex flex-col">
-<div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
-<h2 class="text-lg font-semibold text-gray-200">朗读展示</h2>
-<div class="text-sm text-gray-400 font-mono" id="progress-display">当前句子：第 0 / 0 句</div>
-</div>
-<div class="flex-1 overflow-y-auto pr-2 space-y-1 relative" id="sentence-container">
-<!-- Empty State -->
-<div class="absolute inset-0 flex flex-col items-center justify-center text-gray-600" id="empty-state">
-<i class="fa-regular fa-file-lines text-4xl mb-3 opacity-50"></i>
-<p>请在上方输入文章并点击“开始朗读”</p>
-</div>
-<!-- Sentences will be injected here -->
-</div>
-</section>
-<!-- Controls Section -->
-<section class="glass-card rounded-xl p-6">
-<div class="flex flex-col md:flex-row justify-between items-center gap-6">
-<!-- Playback Buttons -->
-<div class="flex items-center gap-4">
-<button class="btn-interact w-12 h-12 rounded-full bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center" id="btn-prev" title="上一句">
-<i class="fa-solid fa-backward-step"></i>
-</button>
-<button class="btn-interact w-12 h-12 rounded-full bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center" id="btn-replay" title="重读当前句">
-<i class="fa-solid fa-rotate-right"></i>
-</button>
-<button class="btn-interact w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg text-2xl" id="btn-pause" title="暂停/继续">
-<i class="fa-solid fa-pause" id="icon-pause"></i>
-<i class="fa-solid fa-play hidden" id="icon-play"></i>
-</button>
-<button class="btn-interact w-12 h-12 rounded-full bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center" id="btn-next" title="下一句">
-<i class="fa-solid fa-forward-step"></i>
-</button>
-</div>
-<!-- Status Indicator -->
-<div class="flex items-center gap-2 text-sm text-gray-400 bg-gray-800 px-4 py-2 rounded-full">
-<div class="w-2 h-2 rounded-full bg-gray-500" id="status-dot"></div>
-<span id="status-text">就绪</span>
-</div>
-</div>
-</section>
-<!-- Settings Section (Collapsible) -->
-<section class="glass-card rounded-xl overflow-hidden">
-<button class="w-full p-4 flex justify-between items-center bg-gray-800 hover:bg-gray-750 transition-colors" id="toggle-settings">
-<span class="font-semibold text-gray-200"><i class="fa-solid fa-sliders mr-2"></i> 参数设置</span>
-<i class="fa-solid fa-chevron-down transition-transform duration-300" id="settings-arrow"></i>
-</button>
-<div class="p-6 space-y-6 transition-all duration-300 ease-in-out" id="settings-content">
-<!-- Speed Control -->
-<div>
-<label class="block text-sm font-medium text-gray-300 mb-3">语速控制</label>
-<div class="grid grid-cols-4 gap-2">
-<button class="speed-btn btn-interact py-2 rounded-lg border border-gray-600 hover:border-purple-500 text-sm transition-colors" data-rate="0.65">0.65x</button>
-<button class="speed-btn btn-interact py-2 rounded-lg border border-gray-600 hover:border-purple-500 text-sm transition-colors" data-rate="0.75">0.75x</button>
-<button class="speed-btn btn-interact py-2 rounded-lg border border-purple-500 bg-purple-900/30 text-purple-300 text-sm transition-colors" data-rate="1">1x</button>
-<button class="speed-btn btn-interact py-2 rounded-lg border border-gray-600 hover:border-purple-500 text-sm transition-colors" data-rate="1.25">1.25x</button>
-</div>
-</div>
-<!-- Pause Duration -->
+
+<!-- Settings Section -->
+<section class="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700 space-y-6">
+<!-- Row 1: Rate & Volume -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Rate Control -->
 <div>
-<div class="flex justify-between mb-2">
-<label class="text-sm text-gray-300">词语间停顿 (毫秒)</label>
-<span class="text-xs text-purple-400 font-mono" id="val-word-pause">150</span>
+<h3 class="text-sm font-medium text-gray-300 mb-3">语速控制</h3>
+<div class="flex bg-gray-900 rounded-lg p-1 border border-gray-700">
+<button class="rate-btn flex-1 py-1.5 text-xs rounded-md transition-colors text-gray-400 hover:text-white" data-rate="0.65">0.65x</button>
+<button class="rate-btn flex-1 py-1.5 text-xs rounded-md transition-colors text-gray-400 hover:text-white" data-rate="0.75">0.75x</button>
+<button class="rate-btn flex-1 py-1.5 text-xs rounded-md transition-colors bg-indigo-600 text-white shadow-sm" data-rate="1">1x</button>
+<button class="rate-btn flex-1 py-1.5 text-xs rounded-md transition-colors text-gray-400 hover:text-white" data-rate="1.25">1.25x</button>
 </div>
-<input class="w-full" id="range-word-pause" max="1000" min="0" step="50" type="range" value="150"/>
 </div>
+<!-- Volume Control -->
 <div>
-<div class="flex justify-between mb-2">
-<label class="text-sm text-gray-300">句子间停顿 (毫秒)</label>
-<span class="text-xs text-purple-400 font-mono" id="val-sentence-pause">800</span>
+<div class="flex justify-between items-center mb-3">
+<h3 class="text-sm font-medium text-gray-300">音量调节</h3>
+<span class="text-xs text-gray-500">默认: 1倍</span>
 </div>
-<input class="w-full" id="range-sentence-pause" max="3000" min="0" step="100" type="range" value="800"/>
+<div class="flex items-center gap-2">
+<select class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none" id="volumeSelect">
+<option value="1">1倍 (默认)</option>
+<option value="1.5">1.5倍</option>
+<option value="2">2倍</option>
+<option value="2.5">2.5倍</option>
+<option value="3">3倍</option>
+</select>
 </div>
 </div>
-<!-- Shortcuts -->
+</div>
+<!-- Row 2: Pauses -->
 <div>
-<label class="block text-sm font-medium text-gray-300 mb-3">键盘快捷键绑定</label>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="flex justify-between items-center mb-3">
+<h3 class="text-sm font-medium text-gray-300">停顿时长 (毫秒)</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="relative">
+<label class="block text-xs text-gray-500 mb-1">词语间停顿 (默认1000ms)</label>
+<input class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none" id="wordPauseInput" min="0" step="50" type="number" value="1000"/>
+</div>
+<div class="relative">
+<label class="block text-xs text-gray-500 mb-1">句子间停顿 (默认1200ms)</label>
+<input class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-sm text-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none" id="sentencePauseInput" min="0" step="100" type="number" value="1200"/>
+</div>
+</div>
+</div>
+<!-- Row 3: Hotkeys -->
+<div>
+<h3 class="text-sm font-medium text-gray-300 mb-3">快捷键设置</h3>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<!-- Prev Key -->
 <div class="flex flex-col gap-1">
 <label class="text-xs text-gray-500">上一句</label>
-<input class="input-base text-center py-2 rounded cursor-pointer font-mono text-sm uppercase hover:bg-gray-600" id="key-prev" readonly="" type="text" value="A"/>
+<input class="hotkey-input bg-gray-900 border border-gray-600 rounded-lg p-2 text-center text-sm text-indigo-400 cursor-pointer hover:border-indigo-500 transition-colors uppercase" data-action="prev" readonly="" type="text" value="A"/>
 </div>
+<!-- Replay Key -->
 <div class="flex flex-col gap-1">
 <label class="text-xs text-gray-500">重读</label>
-<input class="input-base text-center py-2 rounded cursor-pointer font-mono text-sm uppercase hover:bg-gray-600" id="key-replay" readonly="" type="text" value="S"/>
+<input class="hotkey-input bg-gray-900 border border-gray-600 rounded-lg p-2 text-center text-sm text-indigo-400 cursor-pointer hover:border-indigo-500 transition-colors uppercase" data-action="replay" readonly="" type="text" value="S"/>
 </div>
+<!-- Next Key -->
 <div class="flex flex-col gap-1">
 <label class="text-xs text-gray-500">下一句</label>
-<input class="input-base text-center py-2 rounded cursor-pointer font-mono text-sm uppercase hover:bg-gray-600" id="key-next" readonly="" type="text" value="D"/>
+<input class="hotkey-input bg-gray-900 border border-gray-600 rounded-lg p-2 text-center text-sm text-indigo-400 cursor-pointer hover:border-indigo-500 transition-colors uppercase" data-action="next" readonly="" type="text" value="D"/>
+</div>
+<!-- Pause Key -->
+<div class="flex flex-col gap-1">
+<label class="text-xs text-gray-500">暂停/继续</label>
+<div class="bg-gray-900 border border-gray-600 rounded-lg p-2 text-center text-sm text-gray-500 select-none">
+                            Space
+                        </div>
 </div>
 </div>
-<p class="text-xs text-gray-500 mt-2"><i class="fa-solid fa-circle-info mr-1"></i>点击输入框后按下任意键进行绑定。暂停默认为空格。</p>
+<p class="text-xs text-gray-600 mt-2">点击输入框后按下任意键进行绑定。暂停默认为空格。</p>
+</div>
+</section>
+
+<!-- Display & Control Section -->
+<section class="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden flex flex-col h-[400px]">
+<!-- Progress Bar -->
+<div class="bg-gray-900/50 p-3 border-b border-gray-700 flex justify-between items-center">
+<span class="text-sm font-medium text-indigo-400" id="progressText">等待输入...</span>
+<button class="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1" id="btnRefresh" title="应用新参数并重读当前句">
+<i class="fas fa-sync-alt"></i> 刷新参数
+                </button>
+</div>
+<!-- Sentence List -->
+<div class="flex-1 overflow-y-auto p-4 space-y-3 relative" id="sentenceContainer">
+<div class="absolute inset-0 flex items-center justify-center text-gray-500 text-sm" id="emptyState">
+                    请在上方输入文章并点击“开始朗读”
+                </div>
+<!-- Sentences will be injected here -->
+</div>
+<!-- Controls -->
+<div class="bg-gray-900/80 p-4 border-t border-gray-700">
+<div class="flex justify-center items-center gap-4 md:gap-8">
+<button class="btn-transition group flex flex-col items-center gap-1 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed" id="btnPrev">
+<div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center group-hover:border-indigo-500 group-hover:bg-indigo-900/30 transition-all">
+<i class="fas fa-step-backward"></i>
+</div>
+<span class="text-xs">上一句</span>
+</button>
+<button class="btn-transition group flex flex-col items-center gap-1 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed" id="btnReplay">
+<div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center group-hover:border-indigo-500 group-hover:bg-indigo-900/30 transition-all">
+<i class="fas fa-undo"></i>
+</div>
+<span class="text-xs">重读</span>
+</button>
+<button class="btn-transition group flex flex-col items-center gap-1 text-indigo-400 hover:text-indigo-300 disabled:opacity-30 disabled:cursor-not-allowed" id="btnPause">
+<div class="w-14 h-14 rounded-full bg-indigo-600 shadow-lg shadow-indigo-900/50 flex items-center justify-center group-hover:scale-105 transition-all">
+<i class="fas fa-pause text-xl" id="iconPause"></i>
+</div>
+<span class="text-xs" id="textPause">暂停</span>
+</button>
+<button class="btn-transition group flex flex-col items-center gap-1 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed" id="btnNext">
+<div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center group-hover:border-indigo-500 group-hover:bg-indigo-900/30 transition-all">
+<i class="fas fa-step-forward"></i>
+</div>
+<span class="text-xs">下一句</span>
+</button>
 </div>
 </div>
 </section>
-<!-- Footer -->
-<footer class="text-center text-gray-600 text-sm py-4">
+<footer class="text-center text-gray-600 text-xs py-4">
             © 2026 抄写助手（增强版）. All rights reserved.
         </footer>
 </main>
+<!-- Toast Container -->
+<div class="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none" id="toastContainer"></div>
 <script>
         /**
-         * Application State & Configuration
+         * State Management
          */
         const state = {
             sentences: [],
             currentIndex: -1,
             isPlaying: false,
             isPaused: false,
-            isReadingWord: false,
+            currentWords: [],
             currentWordIndex: 0,
-            currentSegments: [],
-            stopRequested: false,
-            resumeRequested: false
+            mode: 'normal', // 'normal' 或 'ai'
+            aiStep: 1, // AI模式步骤：1=等待粘贴文章，2=等待粘贴AI结果
+            tempArticle: '', // 暂存的用户文章（用于生成提示词）
+            config: {
+                rate: 1,
+                wordPause: 1000,      // 默认1000ms
+                sentencePause: 1200,  // 默认1200ms
+                volume: 1,
+                hotkeys: {
+                    prev: 'a',
+                    replay: 's',
+                    next: 'd'
+                }
+            },
+            stopSignal: false,
+            pauseSignal: false,
+            timers: []
         };
 
-        const config = {
-            rate: 1,
-            wordPause: 150,
-            sentencePause: 800,
-            shortcuts: {
-                prev: 'a',
-                replay: 's',
-                next: 'd',
-                pause: ' '
-            }
-        };
-
-        // DOM Elements
+        /**
+         * DOM Elements
+         */
         const els = {
-            input: document.getElementById('text-input'),
-            inputStatus: document.getElementById('input-status'),
-            btnStart: document.getElementById('btn-start'),
-            sentenceContainer: document.getElementById('sentence-container'),
-            emptyState: document.getElementById('empty-state'),
-            progress: document.getElementById('progress-display'),
-            btnPrev: document.getElementById('btn-prev'),
-            btnReplay: document.getElementById('btn-replay'),
-            btnPause: document.getElementById('btn-pause'),
-            btnNext: document.getElementById('btn-next'),
-            iconPause: document.getElementById('icon-pause'),
-            iconPlay: document.getElementById('icon-play'),
-            statusDot: document.getElementById('status-dot'),
-            statusText: document.getElementById('status-text'),
-            settingsContent: document.getElementById('settings-content'),
-            settingsArrow: document.getElementById('settings-arrow'),
-            toggleSettings: document.getElementById('toggle-settings'),
-            speedBtns: document.querySelectorAll('.speed-btn'),
-            rangeWordPause: document.getElementById('range-word-pause'),
-            rangeSentencePause: document.getElementById('range-sentence-pause'),
-            valWordPause: document.getElementById('val-word-pause'),
-            valSentencePause: document.getElementById('val-sentence-pause'),
-            keyPrev: document.getElementById('key-prev'),
-            keyReplay: document.getElementById('key-replay'),
-            keyNext: document.getElementById('key-next'),
-            toastContainer: document.getElementById('toast-container')
+            input: document.getElementById('articleInput'),
+            btnStart: document.getElementById('btnStart'),
+            sentenceContainer: document.getElementById('sentenceContainer'),
+            emptyState: document.getElementById('emptyState'),
+            progressText: document.getElementById('progressText'),
+            btnPrev: document.getElementById('btnPrev'),
+            btnReplay: document.getElementById('btnReplay'),
+            btnPause: document.getElementById('btnPause'),
+            btnNext: document.getElementById('btnNext'),
+            btnRefresh: document.getElementById('btnRefresh'),
+            btnCopyPrompt: document.getElementById('btnCopyPrompt'),
+            iconPause: document.getElementById('iconPause'),
+            textPause: document.getElementById('textPause'),
+            rateBtns: document.querySelectorAll('.rate-btn'),
+            volumeSelect: document.getElementById('volumeSelect'),
+            wordPauseInput: document.getElementById('wordPauseInput'),
+            sentencePauseInput: document.getElementById('sentencePauseInput'),
+            hotkeyInputs: document.querySelectorAll('.hotkey-input'),
+            toastContainer: document.getElementById('toastContainer'),
+            tabNormal: document.getElementById('tabNormal'),
+            tabAI: document.getElementById('tabAI'),
+            aiHelperText: document.getElementById('aiHelperText')
         };
 
         /**
          * Utility Functions
          */
-        function showToast(message) {
+        function showToast(message, duration = 2000) {
             const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
+            toast.className = 'bg-gray-800 text-white px-4 py-2 rounded-lg shadow-xl border border-gray-700 text-sm flex items-center gap-2 toast-enter';
+            toast.innerHTML = `<i class="fas fa-info-circle text-indigo-400"></i> ${message}`;
+            
             els.toastContainer.appendChild(toast);
+
             setTimeout(() => {
-                toast.remove();
-            }, 3000);
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-exit');
+                toast.addEventListener('animationend', () => toast.remove());
+            }, duration);
         }
 
-        function updateStatus(status, text) {
-            els.statusText.textContent = text;
-            els.statusDot.className = `w-2 h-2 rounded-full ${status}`;
+        function clearAllTimers() {
+            state.timers.forEach(id => clearTimeout(id));
+            state.timers = [];
         }
 
-        /**
-         * Core Logic: Segmentation
-         */
-        function splitText(text) {
-            // Split by punctuation but keep punctuation attached to the sentence
-            // Regex: Split by position after punctuation
-            const rawSegments = text.split(/(?<=[。？！，；])/);
-            // Filter empty strings and trim
-            return rawSegments
-                .map(s => s.trim())
-                .filter(s => s.length > 0);
-        }
-
-        function segmentSentenceIntoWords(sentence) {
-            // Use Intl.Segmenter for Chinese word segmentation
-            if (typeof Intl !== 'undefined' && Intl.Segmenter) {
-                const segmenter = new Intl.Segmenter('zh-CN', { granularity: 'word' });
-                const segments = [...segmenter.segment(sentence)];
-                // Filter out pure spaces if needed, but keep punctuation
-                return segments.map(s => s.segment).filter(s => s.trim().length > 0);
-            } else {
-                // Fallback for older browsers: split by character (not ideal but functional)
-                return sentence.split('');
-            }
-        }
-
-        /**
-         * UI Updates
-         */
-        function renderSentences() {
-            els.sentenceContainer.innerHTML = '';
-            if (state.sentences.length === 0) {
-                els.sentenceContainer.appendChild(els.emptyState);
-                els.emptyState.style.display = 'flex';
-                return;
-            }
-            els.emptyState.style.display = 'none'; // Ensure it's hidden logic-wise if we recreate it, but here we are clearing innerHTML
-
-            state.sentences.forEach((sentence, index) => {
-                const div = document.createElement('div');
-                div.className = 'sentence-item text-gray-300 text-lg leading-relaxed cursor-default';
-                div.textContent = sentence;
-                div.dataset.index = index;
-                div.id = `sentence-${index}`;
-                els.sentenceContainer.appendChild(div);
-            });
-        }
-
-        function highlightSentence(index) {
-            // Remove previous highlight
-            const prev = document.querySelector('.sentence-item.active');
-            if (prev) prev.classList.remove('active');
-
-            // Add new highlight
-            const curr = document.getElementById(`sentence-${index}`);
-            if (curr) {
-                curr.classList.add('active');
-                curr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-
-            // Update Progress
-            els.progress.textContent = `当前句子：第 ${index + 1} / ${state.sentences.length} 句`;
-        }
-
-        /**
-         * Speech Logic
-         */
-        function speakText(text) {
-            return new Promise((resolve) => {
-                if (state.stopRequested) {
-                    resolve();
-                    return;
-                }
-
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = config.rate;
-                utterance.lang = 'zh-CN';
-
-                utterance.onend = () => {
-                    resolve();
-                };
-
-                utterance.onerror = (e) => {
-                    console.warn('Speech error:', e);
-                    resolve(); // Continue even on error to prevent hanging
-                };
-
-                window.speechSynthesis.speak(utterance);
-            });
-        }
-
-        function wait(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
-        async function playCurrentSentence() {
-            if (state.currentIndex < 0 || state.currentIndex >= state.sentences.length) return;
-
-            const sentence = state.sentences[state.currentIndex];
-            state.currentSegments = segmentSentenceIntoWords(sentence);
-            
-            updateStatus('bg-green-500', '正在朗读...');
-            highlightSentence(state.currentIndex);
-
-            // Loop through words
-            for (let i = 0; i < state.currentSegments.length; i++) {
-                if (state.stopRequested) break;
-                
-                // If paused, wait until unpaused
-                while (state.isPaused) {
-                    if (state.stopRequested) return;
-                    await wait(100);
-                }
-
-                state.currentWordIndex = i;
-                const word = state.currentSegments[i];
-                
-                await speakText(word);
-                
-                // Word pause
-                if (i < state.currentSegments.length - 1) {
-                    await wait(config.wordPause);
-                }
-            }
-
-            // Sentence finished naturally (not stopped by user)
-            if (!state.stopRequested) {
-                // Sentence pause
-                await wait(config.sentencePause);
-                nextSentence();
-            }
-        }
-
-        function startReading() {
-            const text = els.input.value.trim();
-            if (!text) {
-                showToast('请输入文章内容');
-                return;
-            }
-
-            // Apply settings from UI
-            applySettings();
-
-            // Reset state
+        function forceStopAllSpeech() {
+            state.stopSignal = true;
+            state.pauseSignal = false;
+            clearAllTimers();
             window.speechSynthesis.cancel();
-            state.sentences = splitText(text);
             
-            if (state.sentences.length === 0) {
-                showToast('无法识别有效句子，请检查输入');
-                return;
+            while (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+                window.speechSynthesis.cancel();
             }
-
-            state.currentIndex = 0;
-            state.isPlaying = true;
-            state.isPaused = false;
-            state.stopRequested = false;
             
-            // Update UI
-            renderSentences();
-            updatePauseButtonUI();
+            setTimeout(() => {
+                window.speechSynthesis.cancel();
+            }, 50);
             
-            // Start
-            playCurrentSentence();
-        }
-
-        function stopCurrent() {
-            state.stopRequested = true;
-            window.speechSynthesis.cancel();
             state.isPlaying = false;
-            updateStatus('bg-gray-500', '已停止');
-        }
-
-        function prevSentence() {
-            if (!state.isPlaying && state.sentences.length === 0) return;
-            
-            if (state.currentIndex <= 0) {
-                showToast('已经是第一句了');
-                return;
-            }
-
-            state.stopRequested = true; // Stop current word loop
-            setTimeout(() => {
-                state.currentIndex--;
-                state.stopRequested = false;
-                state.isPlaying = true;
-                state.isPaused = false;
-                updatePauseButtonUI();
-                playCurrentSentence();
-            }, 100);
-        }
-
-        function nextSentence() {
-            if (state.sentences.length === 0) return;
-
-            if (state.currentIndex >= state.sentences.length - 1) {
-                stopCurrent();
-                showToast('朗读结束');
-                updateStatus('bg-gray-500', '朗读结束');
-                return;
-            }
-
-            // If called automatically from playCurrentSentence, stopRequested is already false
-            // If called manually via button:
-            if (!state.stopRequested) {
-                state.stopRequested = true;
-                setTimeout(() => {
-                    state.currentIndex++;
-                    state.stopRequested = false;
-                    playCurrentSentence();
-                }, 100);
-            } else {
-                // Logic for auto-next
-                state.currentIndex++;
-                playCurrentSentence();
-            }
-        }
-
-        function replaySentence() {
-            if (!state.isPlaying && state.sentences.length === 0) return;
-            
-            state.stopRequested = true;
-            setTimeout(() => {
-                state.stopRequested = false;
-                state.isPaused = false;
-                updatePauseButtonUI();
-                playCurrentSentence();
-            }, 100);
-        }
-
-        function togglePause() {
-            if (!state.isPlaying) return;
-
-            state.isPaused = !state.isPaused;
+            state.isPaused = false;
             updatePauseButtonUI();
-
-            if (state.isPaused) {
-                window.speechSynthesis.cancel(); // Stop audio immediately
-                updateStatus('bg-yellow-500', '已暂停');
-            } else {
-                updateStatus('bg-green-500', '正在朗读...');
-                // Resume logic handled inside playCurrentSentence loop
-            }
         }
 
         function updatePauseButtonUI() {
             if (state.isPaused) {
-                els.iconPause.classList.add('hidden');
-                els.iconPlay.classList.remove('hidden');
-                els.btnPause.classList.replace('bg-blue-600', 'bg-green-600');
-                els.btnPause.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
-                els.btnPause.title = "继续朗读";
+                els.iconPause.className = 'fas fa-play text-xl';
+                els.textPause.textContent = '继续';
             } else {
-                els.iconPause.classList.remove('hidden');
-                els.iconPlay.classList.add('hidden');
-                els.btnPause.classList.replace('bg-green-600', 'bg-blue-600');
-                els.btnPause.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
-                els.btnPause.title = "暂停朗读";
+                els.iconPause.className = 'fas fa-pause text-xl';
+                els.textPause.textContent = '暂停';
+            }
+        }
+
+        function updateProgress() {
+            if (state.sentences.length === 0) {
+                els.progressText.textContent = '等待输入...';
+                return;
+            }
+            const current = state.currentIndex + 1;
+            const total = state.sentences.length;
+            els.progressText.textContent = `当前句子：第 ${current} / ${total} 句`;
+        }
+
+        function highlightSentence(index, shouldScroll = false) {
+            const prev = document.querySelector('.sentence-active');
+            if (prev) {
+                prev.classList.remove('sentence-active', 'bg-indigo-900/40', 'border-l-4', 'border-indigo-500');
+                prev.classList.add('border-l-4', 'border-transparent');
+            }
+
+            const current = document.getElementById(`sent-${index}`);
+            if (current) {
+                current.classList.add('sentence-active', 'bg-indigo-900/40', 'border-indigo-500');
+                current.classList.remove('border-transparent');
+                
+                // 仅当 shouldScroll 为 true 时才滚动（用户主动点击）
+                if (shouldScroll) {
+                    current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
         }
 
         /**
-         * Settings & Event Listeners
+         * Mode Switching
          */
-        function applySettings() {
-            // Rate
-            const activeRateBtn = document.querySelector('.speed-btn.border-purple-500');
-            if (activeRateBtn) {
-                config.rate = parseFloat(activeRateBtn.dataset.rate);
+        function switchMode(mode) {
+            state.mode = mode;
+            
+            // Update tab UI
+            if (mode === 'normal') {
+                els.tabNormal.classList.add('active', 'bg-indigo-600', 'text-white', 'border-indigo-600');
+                els.tabNormal.classList.remove('text-gray-400', 'border-transparent');
+                els.tabAI.classList.remove('active', 'bg-indigo-600', 'text-white', 'border-indigo-600');
+                els.tabAI.classList.add('text-gray-400', 'border-transparent');
+                
+                // Hide AI elements
+                els.btnCopyPrompt.classList.add('hidden');
+                els.aiHelperText.classList.add('hidden');
+                
+                // Reset input placeholder
+                els.input.placeholder = '可粘贴或输入文章...';
+                
+                // Reset AI step
+                state.aiStep = 1;
+            } else {
+                els.tabAI.classList.add('active', 'bg-indigo-600', 'text-white', 'border-indigo-600');
+                els.tabAI.classList.remove('text-gray-400', 'border-transparent');
+                els.tabNormal.classList.remove('active', 'bg-indigo-600', 'text-white', 'border-indigo-600');
+                els.tabNormal.classList.add('text-gray-400', 'border-transparent');
+                
+                // Show AI elements
+                els.btnCopyPrompt.classList.remove('hidden');
+                els.aiHelperText.classList.remove('hidden');
+                
+                // Set to step 1
+                state.aiStep = 1;
+                els.input.placeholder = '📝 第1步：请粘贴你要朗读的文章';
+                els.input.value = ''; // Clear input
+            }
+        }
+
+        /**
+         * Generate AI Prompt
+         */
+        function generatePrompt(article) {
+            return `请对以下文章进行智能分词朗读标记。规则如下：
+1. 在需要短暂停顿的位置插入两个星号：**
+2. 在需要较长停顿或分段的位置插入两个井号：##
+3. 保持原文所有文字和标点不变
+
+文章内容：
+${article}`;
+        }
+
+        /**
+         * Parse AI Markers - 存储带标记原文用于分词，返回去标记文本用于显示
+         */
+        function parseAIMarkers(text) {
+            // Split by ## first (sentence breaks)
+            const sentences = text.split('##').filter(s => s.trim());
+            
+            return sentences.map(sentence => {
+                // 保存带标记的原始文本（用于分词）
+                const rawText = sentence;
+                // 去除 ** 标记，用于显示
+                const displayText = sentence.replace(/\*\*/g, '');
+                // Split by ** (word pauses)
+                const words = sentence.split('**').filter(w => w.trim());
+                
+                return {
+                    rawText: rawText,        // 带标记的原文
+                    text: displayText,       // 去标记的显示文本
+                    words: words.length > 0 ? words : [displayText],
+                    hasMarkers: true
+                };
+            });
+        }
+
+        /**
+         * Text Processing
+         */
+        function processText() {
+            const text = els.input.value.trim();
+            if (!text) {
+                showToast('请输入文章内容');
+                return null;
+            }
+
+            // AI Mode: Parse markers
+            if (state.mode === 'ai') {
+                if (text.includes('**') || text.includes('##')) {
+                    return parseAIMarkers(text);
+                } else {
+                    showToast('AI模式下，请粘贴带 ** 和 ## 标记的文章');
+                    return null;
+                }
+            }
+
+            // Normal Mode: Split by punctuation
+            const rawSentences = text.split(/([。，；？！])/);
+            const result = [];
+            let tempBuffer = '';
+
+            for (let i = 0; i < rawSentences.length; i++) {
+                const chunk = rawSentences[i];
+                if (/[。，；？！]/.test(chunk)) {
+                    tempBuffer += chunk;
+                    if (tempBuffer.trim().length > 0) {
+                        result.push(tempBuffer.trim());
+                        tempBuffer = '';
+                    }
+                } else {
+                    tempBuffer += chunk;
+                }
             }
             
-            // Pauses
-            config.wordPause = parseInt(els.rangeWordPause.value, 10);
-            config.sentencePause = parseInt(els.rangeSentencePause.value, 10);
+            if (tempBuffer.trim().length > 0) {
+                result.push(tempBuffer.trim());
+            }
 
-            // Shortcuts
-            config.shortcuts.prev = els.keyPrev.value.toLowerCase();
-            config.shortcuts.replay = els.keyReplay.value.toLowerCase();
-            config.shortcuts.next = els.keyNext.value.toLowerCase();
+            if (result.length === 0) {
+                showToast('无法识别有效句子，请检查输入');
+                return null;
+            }
+
+            return result;
         }
 
-        function setupEventListeners() {
-            // Start Button
-            els.btnStart.addEventListener('click', startReading);
+        function renderSentences(sentences) {
+            els.sentenceContainer.innerHTML = '';
+            els.emptyState.style.display = 'none';
 
-            // Controls
-            els.btnPrev.addEventListener('click', prevSentence);
-            els.btnNext.addEventListener('click', nextSentence);
-            els.btnReplay.addEventListener('click', replaySentence);
-            els.btnPause.addEventListener('click', togglePause);
-
-            // Input Status
-            els.input.addEventListener('input', () => {
-                if (els.input.value.trim().length > 0) {
-                    els.inputStatus.textContent = '已输入 ' + els.input.value.trim().length + ' 字';
-                    els.inputStatus.classList.add('text-purple-400');
+            sentences.forEach((sent, index) => {
+                const div = document.createElement('div');
+                div.id = `sent-${index}`;
+                div.className = 'sentence-item p-3 rounded-lg border-l-4 border-transparent text-gray-300 text-base leading-relaxed cursor-pointer hover:bg-gray-700/50 transition-colors';
+                
+                // 如果是 AI 模式且有标记，显示去标记的文本
+                if (typeof sent === 'object' && sent.hasMarkers) {
+                    div.textContent = sent.text;  // 使用去标记的显示文本
                 } else {
-                    els.inputStatus.textContent = '等待输入...';
-                    els.inputStatus.classList.remove('text-purple-400');
+                    div.textContent = sent;
                 }
+                
+                div.onclick = () => {
+                    if (state.isPlaying || state.isPaused) {
+                        forceStopAllSpeech();
+                        setTimeout(() => {
+                            state.currentIndex = index;
+                            highlightSentence(index, true); // 用户点击，传入 true 允许滚动
+                            updateProgress();
+                            playCurrentSentence();
+                        }, 150);
+                    } else {
+                        state.currentIndex = index;
+                        highlightSentence(index, true); // 用户点击，传入 true 允许滚动
+                        updateProgress();
+                        playCurrentSentence();
+                    }
+                };
+                els.sentenceContainer.appendChild(div);
             });
+        }
 
-            // Settings Toggle
-            els.toggleSettings.addEventListener('click', () => {
-                const isHidden = els.settingsContent.classList.contains('hidden');
-                if (isHidden) {
-                    els.settingsContent.classList.remove('hidden');
-                    els.settingsArrow.style.transform = 'rotate(180deg)';
+        function getWords(sentence) {
+            // 如果是 AI 模式的对象，使用其 words 数组（已按 ** 分好）
+            if (typeof sentence === 'object' && sentence.words) {
+                return sentence.words;
+            }
+            
+            // 普通模式分词
+            const words = [];
+            let currentWord = '';
+            
+            for (let i = 0; i < sentence.length; i++) {
+                const char = sentence[i];
+                if (/[。，；？！、]/.test(char)) {
+                    if (currentWord) {
+                        words.push(currentWord);
+                        currentWord = '';
+                    }
+                    words.push(char);
                 } else {
-                    els.settingsContent.classList.add('hidden');
-                    els.settingsArrow.style.transform = 'rotate(0deg)';
+                    currentWord += char;
                 }
-            });
+            }
+            
+            if (currentWord) {
+                words.push(currentWord);
+            }
+            
+            return words.length > 0 ? words : [sentence];
+        }
 
-            // Speed Buttons
-            els.speedBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    // Reset styles
-                    els.speedBtns.forEach(b => {
-                        b.classList.remove('border-purple-500', 'bg-purple-900/30', 'text-purple-300');
-                        b.classList.add('border-gray-600');
-                    });
-                    // Set active style
-                    btn.classList.remove('border-gray-600');
-                    btn.classList.add('border-purple-500', 'bg-purple-900/30', 'text-purple-300');
-                });
-            });
+        function playWordSequence(words, wordIndex) {
+            if (state.stopSignal) return;
+            if (state.pauseSignal) return;
 
-            // Range Sliders
-            els.rangeWordPause.addEventListener('input', (e) => {
-                els.valWordPause.textContent = e.target.value;
-            });
-            els.rangeSentencePause.addEventListener('input', (e) => {
-                els.valSentencePause.textContent = e.target.value;
-            });
+            if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+                window.speechSynthesis.cancel();
+            }
 
-            // Shortcut Binding
-            const bindKey = (inputEl) => {
-                inputEl.addEventListener('focus', () => {
-                    inputEl.value = '';
-                    inputEl.placeholder = '按下按键...';
-                });
+            if (wordIndex >= words.length) {
+                if (!state.stopSignal && !state.pauseSignal) {
+                    const timer = setTimeout(() => {
+                        if (!state.stopSignal && !state.pauseSignal) {
+                            playNextSentence();
+                        }
+                    }, state.config.sentencePause);
+                    state.timers.push(timer);
+                }
+                return;
+            }
 
-                inputEl.addEventListener('keydown', (e) => {
-                    e.preventDefault();
-                    let key = e.key;
-                    if (key === ' ') key = 'Space';
-                    inputEl.value = key;
-                    inputEl.placeholder = key;
-                    inputEl.blur();
-                    showToast(`已绑定: ${key}`);
-                });
+            state.currentWordIndex = wordIndex;
+
+            const utterance = new SpeechSynthesisUtterance(words[wordIndex]);
+            utterance.rate = state.config.rate;
+            utterance.volume = Math.min(state.config.volume, 1);
+            utterance.lang = 'zh-CN';
+
+            utterance.onstart = () => {
+                if (state.stopSignal) {
+                    window.speechSynthesis.cancel();
+                }
             };
 
-            bindKey(els.keyPrev);
-            bindKey(els.keyReplay);
-            bindKey(els.keyNext);
+            utterance.onend = () => {
+                if (state.stopSignal || state.pauseSignal) return;
+                
+                const timer = setTimeout(() => {
+                    playWordSequence(words, wordIndex + 1);
+                }, state.config.wordPause);
+                state.timers.push(timer);
+            };
 
-            // Global Keyboard Shortcuts
-            document.addEventListener('keydown', (e) => {
-                // Ignore if typing in input or textarea
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            utterance.onerror = (e) => {
+                console.error('Speech error', e);
+                if (state.stopSignal || state.pauseSignal) return;
+                
+                const timer = setTimeout(() => {
+                    playWordSequence(words, wordIndex + 1);
+                }, state.config.wordPause);
+                state.timers.push(timer);
+            };
 
-                const key = e.key.toLowerCase();
-                const shortcuts = config.shortcuts;
-
-                if (key === shortcuts.prev) {
-                    e.preventDefault();
-                    prevSentence();
-                } else if (key === shortcuts.replay) {
-                    e.preventDefault();
-                    replaySentence();
-                } else if (key === shortcuts.next) {
-                    e.preventDefault();
-                    nextSentence();
-                } else if (key === shortcuts.pause || key === ' ') {
-                    e.preventDefault();
-                    togglePause();
-                }
-            });
+            if (!state.stopSignal) {
+                window.speechSynthesis.speak(utterance);
+            }
         }
 
-        // Initialize
-        setupEventListeners();
+        function playCurrentSentence() {
+            if (state.currentIndex < 0 || state.currentIndex >= state.sentences.length) return;
+
+            forceStopAllSpeech();
+            
+            setTimeout(() => {
+                state.stopSignal = false;
+                state.pauseSignal = false;
+                state.isPlaying = true;
+                state.isPaused = false;
+                
+                const sentence = state.sentences[state.currentIndex];
+                state.currentWords = getWords(sentence);
+                state.currentWordIndex = 0;
+                
+                highlightSentence(state.currentIndex, false); // 自动播放，不滚动
+                updateProgress();
+                updatePauseButtonUI();
+
+                els.btnPrev.disabled = false;
+                els.btnReplay.disabled = false;
+                els.btnNext.disabled = false;
+                els.btnPause.disabled = false;
+                
+                playWordSequence(state.currentWords, 0);
+            }, 100);
+        }
+
+        function playNextSentence() {
+            if (state.currentIndex + 1 >= state.sentences.length) {
+                state.isPlaying = false;
+                state.isPaused = false;
+                updatePauseButtonUI();
+                showToast('朗读结束');
+                
+                els.btnPrev.disabled = false;
+                els.btnReplay.disabled = true;
+                els.btnNext.disabled = true;
+                els.btnPause.disabled = true;
+                return;
+            }
+            
+            forceStopAllSpeech();
+            
+            setTimeout(() => {
+                state.currentIndex++;
+                playCurrentSentence(); // playCurrentSentence 内部会调用 highlightSentence 且传 false
+            }, 150);
+        }
+
+        function playPrevSentence() {
+            if (state.currentIndex <= 0) {
+                showToast('已经是第一句了');
+                return;
+            }
+            
+            forceStopAllSpeech();
+            
+            setTimeout(() => {
+                state.currentIndex--;
+                playCurrentSentence(); // playCurrentSentence 内部会调用 highlightSentence 且传 false
+            }, 150);
+        }
+
+        /**
+         * Event Handlers
+         */
+
+        // Mode Tabs
+        els.tabNormal.addEventListener('click', () => switchMode('normal'));
+        els.tabAI.addEventListener('click', () => switchMode('ai'));
+
+        // Copy Prompt Button - 强化版，双重保障
+        els.btnCopyPrompt.addEventListener('click', async () => {
+            const text = els.input.value.trim();
+            
+            if (!text) {
+                showToast('请先粘贴你要朗读的文章');
+                return;
+            }
+
+            // Save article
+            state.tempArticle = text;
+            const prompt = generatePrompt(text);
+            
+            try {
+                // 方法1：使用 Clipboard API
+                await navigator.clipboard.writeText(prompt);
+                showToast('✅ 提示词已复制！请发给AI');
+                
+                // Move to step 2
+                state.aiStep = 2;
+                els.input.placeholder = '🤖 第2步：请将AI返回的结果粘贴至此';
+                els.input.value = ''; // Clear input
+            } catch (err) {
+                // 方法2：降级方案 - 使用 execCommand
+                try {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = prompt;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    if (successful) {
+                        showToast('✅ 提示词已复制！请发给AI');
+                        state.aiStep = 2;
+                        els.input.placeholder = '🤖 第2步：请将AI返回的结果粘贴至此';
+                        els.input.value = '';
+                    } else {
+                        showToast('❌ 复制失败，请手动复制');
+                        // 显示提示词让用户手动复制
+                        showPromptInDialog(prompt);
+                    }
+                } catch (e) {
+                    showToast('❌ 复制失败，请手动复制');
+                    showPromptInDialog(prompt);
+                }
+            }
+        });
+
+        // 手动复制辅助函数
+        function showPromptInDialog(prompt) {
+            const dialog = document.createElement('div');
+            dialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            dialog.innerHTML = `
+                <div class="bg-gray-800 rounded-xl p-6 max-w-2xl w-full mx-4 border border-gray-700">
+                    <h3 class="text-lg font-medium text-white mb-4">复制提示词</h3>
+                    <textarea class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-gray-100 text-sm" rows="8" readonly>${prompt}</textarea>
+                    <div class="flex justify-end mt-4">
+                        <button class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg" onclick="this.closest('.fixed').remove()">关闭</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(dialog);
+        }
+
+        // Start Button
+        els.btnStart.addEventListener('click', () => {
+            // Check if we're in AI mode step 2 with empty input
+            if (state.mode === 'ai' && state.aiStep === 2 && !els.input.value.trim()) {
+                showToast('请先粘贴AI返回的结果');
+                return;
+            }
+
+            const sentences = processText();
+            if (sentences) {
+                forceStopAllSpeech();
+                
+                setTimeout(() => {
+                    state.sentences = sentences;
+                    state.currentIndex = 0;
+                    renderSentences(sentences);
+                    playCurrentSentence(); // playCurrentSentence 内部会调用 highlightSentence 且传 false
+                }, 150);
+            }
+        });
+
+        // Refresh Button
+        els.btnRefresh.addEventListener('click', () => {
+            updateConfigFromUI();
+            
+            if (state.sentences.length > 0 && state.currentIndex >= 0) {
+                forceStopAllSpeech();
+                
+                setTimeout(() => {
+                    playCurrentSentence();
+                    showToast('已刷新参数并重新朗读');
+                }, 150);
+            } else {
+                showToast('请先开始朗读');
+            }
+        });
+
+        // Control Buttons
+        els.btnPrev.addEventListener('click', () => {
+            if (state.sentences.length === 0) return;
+            forceStopAllSpeech();
+            setTimeout(() => playPrevSentence(), 150);
+        });
+
+        els.btnReplay.addEventListener('click', () => {
+            if (state.sentences.length === 0) return;
+            forceStopAllSpeech();
+            setTimeout(() => playCurrentSentence(), 150);
+        });
+
+        els.btnNext.addEventListener('click', () => {
+            if (state.sentences.length === 0) return;
+            forceStopAllSpeech();
+            setTimeout(() => playNextSentence(), 150);
+        });
+
+        els.btnPause.addEventListener('click', () => {
+            if (!state.isPlaying && !state.isPaused) return;
+
+            if (state.isPaused) {
+                state.isPaused = false;
+                state.pauseSignal = false;
+                state.stopSignal = false;
+                updatePauseButtonUI();
+                
+                if (state.currentWords && state.currentWordIndex < state.currentWords.length) {
+                    playWordSequence(state.currentWords, state.currentWordIndex);
+                } else {
+                    playCurrentSentence();
+                }
+            } else {
+                state.isPaused = true;
+                state.pauseSignal = true;
+                window.speechSynthesis.cancel();
+                clearAllTimers();
+                updatePauseButtonUI();
+            }
+        });
+
+        // Settings UI Logic
+        function updateConfigFromUI() {
+            state.config.wordPause = parseInt(els.wordPauseInput.value) || 1000;
+            state.config.sentencePause = parseInt(els.sentencePauseInput.value) || 1200;
+            state.config.volume = parseFloat(els.volumeSelect.value) || 1;
+        }
+
+        els.rateBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                els.rateBtns.forEach(b => {
+                    b.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+                    b.classList.add('text-gray-400');
+                });
+                e.target.classList.remove('text-gray-400');
+                e.target.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+                state.config.rate = parseFloat(e.target.dataset.rate);
+            });
+        });
+
+        els.volumeSelect.addEventListener('change', () => {
+            state.config.volume = parseFloat(els.volumeSelect.value);
+        });
+
+        // Hotkey Binding Logic
+        let bindingInput = null;
+
+        els.hotkeyInputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                bindingInput = input;
+                input.value = '...';
+                input.classList.add('animate-pulse', 'border-indigo-500');
+            });
+
+            input.addEventListener('blur', () => {
+                if (bindingInput === input) {
+                    const action = input.dataset.action;
+                    input.value = state.config.hotkeys[action].toUpperCase();
+                    input.classList.remove('animate-pulse', 'border-indigo-500');
+                    bindingInput = null;
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (bindingInput === input) {
+                    e.preventDefault();
+                    const key = e.key.toLowerCase();
+                    
+                    if (key === ' ') {
+                        showToast('空格键已保留用于暂停');
+                        return;
+                    }
+
+                    const action = input.dataset.action;
+                    state.config.hotkeys[action] = key;
+                    
+                    input.value = key.toUpperCase();
+                    input.classList.remove('animate-pulse', 'border-indigo-500');
+                    input.blur();
+                    bindingInput = null;
+                    
+                    showToast(`已绑定: ${key.toUpperCase()}`);
+                }
+            });
+        });
+
+        // Global Keyboard Shortcuts
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            const activeElement = document.activeElement;
+            
+            if (bindingInput) return;
+            
+            if (activeElement && (activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'INPUT')) {
+                if (key === ' ') {
+                    e.preventDefault();
+                    els.btnPause.click();
+                }
+                return;
+            }
+
+            if (key === ' ') {
+                e.preventDefault();
+                els.btnPause.click();
+                return;
+            }
+
+            if (key === state.config.hotkeys.prev) {
+                e.preventDefault();
+                els.btnPrev.click();
+            } else if (key === state.config.hotkeys.replay) {
+                e.preventDefault();
+                els.btnReplay.click();
+            } else if (key === state.config.hotkeys.next) {
+                e.preventDefault();
+                els.btnNext.click();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (bindingInput && !e.target.classList.contains('hotkey-input')) {
+                const action = bindingInput.dataset.action;
+                bindingInput.value = state.config.hotkeys[action].toUpperCase();
+                bindingInput.classList.remove('animate-pulse', 'border-indigo-500');
+                bindingInput.blur();
+                bindingInput = null;
+            }
+        });
+
+        // Initialize UI State
+        function init() {
+            els.btnPrev.disabled = true;
+            els.btnReplay.disabled = true;
+            els.btnNext.disabled = true;
+            els.btnPause.disabled = true;
+            switchMode('normal');
+        }
+        init();
 
     </script>
 </body>
