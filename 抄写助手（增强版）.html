@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>抄写助手（增强版）</title>
+<!-- TailwindCSS -->
+<script src="https://image.uc.cn/s/uae/g/3n/mos-production/0915/3.4.17.js"></script>
+<!-- Font Awesome -->
+<script src="https://image.uc.cn/s/uae/g/3n/mos-production/fontawesome-free-7.1.0-web/js/all.min.js"></script>
+<link href="https://image.uc.cn/s/uae/g/3n/mos-production/fontawesome-free-7.1.0-web/css/fontawesome.min.css" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#121212',
+                            800: '#1e1e1e',
+                            700: '#2c2c2c',
+                            600: '#3a3a3a',
+                        },
+                        accent: {
+                            purple: '#7c3aed',
+                            blue: '#3b82f6',
+                            highlight: 'rgba(124, 58, 237, 0.2)'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; 
+        }
+
+        /* Base Styles */
+        body {
+            background-color: #121212;
+            color: #e5e7eb;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Card & Input Styles */
+        .glass-card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.16);
+            transition: all 0.3s ease;
+        }
+
+        .input-base {
+            background-color: #2c2c2c;
+            border: 1px solid #4b5563;
+            color: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-base:focus {
+            outline: none;
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Sentence Highlight */
+        .sentence-item {
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid transparent;
+        }
+        .sentence-item.active {
+            background-color: rgba(124, 58, 237, 0.15); /* Soft Purple */
+            border-left-color: #7c3aed;
+            transform: translateX(4px);
+        }
+
+        /* Button Micro-interactions */
+        .btn-interact {
+            transition: transform 0.1s ease, background-color 0.2s;
+        }
+        .btn-interact:active {
+            transform: scale(0.95);
+        }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #7c3aed;
+            cursor: pointer;
+            margin-top: -6px; 
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #4b5563;
+            border-radius: 2px;
+        }
+        
+        /* Toast Notification */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-size: 0.9rem;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 2.7s;
+            border-left: 4px solid #7c3aed;
+        }
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-8 px-4">
+<!-- Toast Container -->
+<div id="toast-container"></div>
+<!-- Main Container -->
+<main class="w-full max-w-4xl space-y-6">
+<!-- Header -->
+<header class="text-center space-y-2">
+<h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
+                抄写助手
+            </h1>
+<p class="text-gray-400 text-sm md:text-base">分句朗读 · 慢速跟读 · 键盘控制</p>
+</header>
+<!-- Input Section -->
+<section class="glass-card rounded-xl p-6">
+<div class="flex justify-between items-center mb-3">
+<label class="text-sm font-medium text-gray-300">文章输入</label>
+<span class="text-xs text-gray-500" id="input-status">等待输入...</span>
+</div>
+<textarea class="input-base w-full h-40 rounded-lg p-4 text-base leading-relaxed resize-none" id="text-input" placeholder="可粘贴或输入文章..."></textarea>
+<div class="mt-4 flex justify-end">
+<button class="btn-interact bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-8 rounded-lg shadow-lg flex items-center gap-2" id="btn-start">
+<i class="fa-solid fa-play"></i> 开始朗读
+                </button>
+</div>
+</section>
+<!-- Reading Display Area -->
+<section class="glass-card rounded-xl p-6 min-h-[300px] flex flex-col">
+<div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+<h2 class="text-lg font-semibold text-gray-200">朗读展示</h2>
+<div class="text-sm text-gray-400 font-mono" id="progress-display">当前句子：第 0 / 0 句</div>
+</div>
+<div class="flex-1 overflow-y-auto pr-2 space-y-1 relative" id="sentence-container">
+<!-- Empty State -->
+<div class="absolute inset-0 flex flex-col items-center justify-center text-gray-600" id="empty-state">
+<i class="fa-regular fa-file-lines text-4xl mb-3 opacity-50"></i>
+<p>请在上方输入文章并点击“开始朗读”</p>
+</div>
+<!-- Sentences will be injected here -->
+</div>
+</section>
+<!-- Controls Section -->
+<section class="glass-card rounded-xl p-6">
+<div class="flex flex-col md:flex-row justify-between items-center gap-6">
+<!-- Playback Buttons -->
+<div class="flex items-center gap-4">
+<button class="btn-interact w-12 h-12 rounded-full bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center" id="btn-prev" title="上一句">
+<i class="fa-solid fa-backward-step"></i>
+</button>
+<button class="btn-interact w-12 h-12 rounded-full bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center" id="btn-replay" title="重读当前句">
+<i class="fa-solid fa-rotate-right"></i>
+</button>
+<button class="btn-interact w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg text-2xl" id="btn-pause" title="暂停/继续">
+<i class="fa-solid fa-pause" id="icon-pause"></i>
+<i class="fa-solid fa-play hidden" id="icon-play"></i>
+</button>
+<button class="btn-interact w-12 h-12 rounded-full bg-gray-700 hover:bg-gray-600 text-white flex items-center justify-center" id="btn-next" title="下一句">
+<i class="fa-solid fa-forward-step"></i>
+</button>
+</div>
+<!-- Status Indicator -->
+<div class="flex items-center gap-2 text-sm text-gray-400 bg-gray-800 px-4 py-2 rounded-full">
+<div class="w-2 h-2 rounded-full bg-gray-500" id="status-dot"></div>
+<span id="status-text">就绪</span>
+</div>
+</div>
+</section>
+<!-- Settings Section (Collapsible) -->
+<section class="glass-card rounded-xl overflow-hidden">
+<button class="w-full p-4 flex justify-between items-center bg-gray-800 hover:bg-gray-750 transition-colors" id="toggle-settings">
+<span class="font-semibold text-gray-200"><i class="fa-solid fa-sliders mr-2"></i> 参数设置</span>
+<i class="fa-solid fa-chevron-down transition-transform duration-300" id="settings-arrow"></i>
+</button>
+<div class="p-6 space-y-6 transition-all duration-300 ease-in-out" id="settings-content">
+<!-- Speed Control -->
+<div>
+<label class="block text-sm font-medium text-gray-300 mb-3">语速控制</label>
+<div class="grid grid-cols-4 gap-2">
+<button class="speed-btn btn-interact py-2 rounded-lg border border-gray-600 hover:border-purple-500 text-sm transition-colors" data-rate="0.65">0.65x</button>
+<button class="speed-btn btn-interact py-2 rounded-lg border border-gray-600 hover:border-purple-500 text-sm transition-colors" data-rate="0.75">0.75x</button>
+<button class="speed-btn btn-interact py-2 rounded-lg border border-purple-500 bg-purple-900/30 text-purple-300 text-sm transition-colors" data-rate="1">1x</button>
+<button class="speed-btn btn-interact py-2 rounded-lg border border-gray-600 hover:border-purple-500 text-sm transition-colors" data-rate="1.25">1.25x</button>
+</div>
+</div>
+<!-- Pause Duration -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<div class="flex justify-between mb-2">
+<label class="text-sm text-gray-300">词语间停顿 (毫秒)</label>
+<span class="text-xs text-purple-400 font-mono" id="val-word-pause">150</span>
+</div>
+<input class="w-full" id="range-word-pause" max="1000" min="0" step="50" type="range" value="150"/>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<label class="text-sm text-gray-300">句子间停顿 (毫秒)</label>
+<span class="text-xs text-purple-400 font-mono" id="val-sentence-pause">800</span>
+</div>
+<input class="w-full" id="range-sentence-pause" max="3000" min="0" step="100" type="range" value="800"/>
+</div>
+</div>
+<!-- Shortcuts -->
+<div>
+<label class="block text-sm font-medium text-gray-300 mb-3">键盘快捷键绑定</label>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="flex flex-col gap-1">
+<label class="text-xs text-gray-500">上一句</label>
+<input class="input-base text-center py-2 rounded cursor-pointer font-mono text-sm uppercase hover:bg-gray-600" id="key-prev" readonly="" type="text" value="A"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-xs text-gray-500">重读</label>
+<input class="input-base text-center py-2 rounded cursor-pointer font-mono text-sm uppercase hover:bg-gray-600" id="key-replay" readonly="" type="text" value="S"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-xs text-gray-500">下一句</label>
+<input class="input-base text-center py-2 rounded cursor-pointer font-mono text-sm uppercase hover:bg-gray-600" id="key-next" readonly="" type="text" value="D"/>
+</div>
+</div>
+<p class="text-xs text-gray-500 mt-2"><i class="fa-solid fa-circle-info mr-1"></i>点击输入框后按下任意键进行绑定。暂停默认为空格。</p>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="text-center text-gray-600 text-sm py-4">
+            © 2026 抄写助手（增强版）. All rights reserved.
+        </footer>
+</main>
+<script>
+        /**
+         * Application State & Configuration
+         */
+        const state = {
+            sentences: [],
+            currentIndex: -1,
+            isPlaying: false,
+            isPaused: false,
+            isReadingWord: false,
+            currentWordIndex: 0,
+            currentSegments: [],
+            stopRequested: false,
+            resumeRequested: false
+        };
+
+        const config = {
+            rate: 1,
+            wordPause: 150,
+            sentencePause: 800,
+            shortcuts: {
+                prev: 'a',
+                replay: 's',
+                next: 'd',
+                pause: ' '
+            }
+        };
+
+        // DOM Elements
+        const els = {
+            input: document.getElementById('text-input'),
+            inputStatus: document.getElementById('input-status'),
+            btnStart: document.getElementById('btn-start'),
+            sentenceContainer: document.getElementById('sentence-container'),
+            emptyState: document.getElementById('empty-state'),
+            progress: document.getElementById('progress-display'),
+            btnPrev: document.getElementById('btn-prev'),
+            btnReplay: document.getElementById('btn-replay'),
+            btnPause: document.getElementById('btn-pause'),
+            btnNext: document.getElementById('btn-next'),
+            iconPause: document.getElementById('icon-pause'),
+            iconPlay: document.getElementById('icon-play'),
+            statusDot: document.getElementById('status-dot'),
+            statusText: document.getElementById('status-text'),
+            settingsContent: document.getElementById('settings-content'),
+            settingsArrow: document.getElementById('settings-arrow'),
+            toggleSettings: document.getElementById('toggle-settings'),
+            speedBtns: document.querySelectorAll('.speed-btn'),
+            rangeWordPause: document.getElementById('range-word-pause'),
+            rangeSentencePause: document.getElementById('range-sentence-pause'),
+            valWordPause: document.getElementById('val-word-pause'),
+            valSentencePause: document.getElementById('val-sentence-pause'),
+            keyPrev: document.getElementById('key-prev'),
+            keyReplay: document.getElementById('key-replay'),
+            keyNext: document.getElementById('key-next'),
+            toastContainer: document.getElementById('toast-container')
+        };
+
+        /**
+         * Utility Functions
+         */
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            els.toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function updateStatus(status, text) {
+            els.statusText.textContent = text;
+            els.statusDot.className = `w-2 h-2 rounded-full ${status}`;
+        }
+
+        /**
+         * Core Logic: Segmentation
+         */
+        function splitText(text) {
+            // Split by punctuation but keep punctuation attached to the sentence
+            // Regex: Split by position after punctuation
+            const rawSegments = text.split(/(?<=[。？！，；])/);
+            // Filter empty strings and trim
+            return rawSegments
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+        }
+
+        function segmentSentenceIntoWords(sentence) {
+            // Use Intl.Segmenter for Chinese word segmentation
+            if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+                const segmenter = new Intl.Segmenter('zh-CN', { granularity: 'word' });
+                const segments = [...segmenter.segment(sentence)];
+                // Filter out pure spaces if needed, but keep punctuation
+                return segments.map(s => s.segment).filter(s => s.trim().length > 0);
+            } else {
+                // Fallback for older browsers: split by character (not ideal but functional)
+                return sentence.split('');
+            }
+        }
+
+        /**
+         * UI Updates
+         */
+        function renderSentences() {
+            els.sentenceContainer.innerHTML = '';
+            if (state.sentences.length === 0) {
+                els.sentenceContainer.appendChild(els.emptyState);
+                els.emptyState.style.display = 'flex';
+                return;
+            }
+            els.emptyState.style.display = 'none'; // Ensure it's hidden logic-wise if we recreate it, but here we are clearing innerHTML
+
+            state.sentences.forEach((sentence, index) => {
+                const div = document.createElement('div');
+                div.className = 'sentence-item text-gray-300 text-lg leading-relaxed cursor-default';
+                div.textContent = sentence;
+                div.dataset.index = index;
+                div.id = `sentence-${index}`;
+                els.sentenceContainer.appendChild(div);
+            });
+        }
+
+        function highlightSentence(index) {
+            // Remove previous highlight
+            const prev = document.querySelector('.sentence-item.active');
+            if (prev) prev.classList.remove('active');
+
+            // Add new highlight
+            const curr = document.getElementById(`sentence-${index}`);
+            if (curr) {
+                curr.classList.add('active');
+                curr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            // Update Progress
+            els.progress.textContent = `当前句子：第 ${index + 1} / ${state.sentences.length} 句`;
+        }
+
+        /**
+         * Speech Logic
+         */
+        function speakText(text) {
+            return new Promise((resolve) => {
+                if (state.stopRequested) {
+                    resolve();
+                    return;
+                }
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = config.rate;
+                utterance.lang = 'zh-CN';
+
+                utterance.onend = () => {
+                    resolve();
+                };
+
+                utterance.onerror = (e) => {
+                    console.warn('Speech error:', e);
+                    resolve(); // Continue even on error to prevent hanging
+                };
+
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+
+        function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function playCurrentSentence() {
+            if (state.currentIndex < 0 || state.currentIndex >= state.sentences.length) return;
+
+            const sentence = state.sentences[state.currentIndex];
+            state.currentSegments = segmentSentenceIntoWords(sentence);
+            
+            updateStatus('bg-green-500', '正在朗读...');
+            highlightSentence(state.currentIndex);
+
+            // Loop through words
+            for (let i = 0; i < state.currentSegments.length; i++) {
+                if (state.stopRequested) break;
+                
+                // If paused, wait until unpaused
+                while (state.isPaused) {
+                    if (state.stopRequested) return;
+                    await wait(100);
+                }
+
+                state.currentWordIndex = i;
+                const word = state.currentSegments[i];
+                
+                await speakText(word);
+                
+                // Word pause
+                if (i < state.currentSegments.length - 1) {
+                    await wait(config.wordPause);
+                }
+            }
+
+            // Sentence finished naturally (not stopped by user)
+            if (!state.stopRequested) {
+                // Sentence pause
+                await wait(config.sentencePause);
+                nextSentence();
+            }
+        }
+
+        function startReading() {
+            const text = els.input.value.trim();
+            if (!text) {
+                showToast('请输入文章内容');
+                return;
+            }
+
+            // Apply settings from UI
+            applySettings();
+
+            // Reset state
+            window.speechSynthesis.cancel();
+            state.sentences = splitText(text);
+            
+            if (state.sentences.length === 0) {
+                showToast('无法识别有效句子，请检查输入');
+                return;
+            }
+
+            state.currentIndex = 0;
+            state.isPlaying = true;
+            state.isPaused = false;
+            state.stopRequested = false;
+            
+            // Update UI
+            renderSentences();
+            updatePauseButtonUI();
+            
+            // Start
+            playCurrentSentence();
+        }
+
+        function stopCurrent() {
+            state.stopRequested = true;
+            window.speechSynthesis.cancel();
+            state.isPlaying = false;
+            updateStatus('bg-gray-500', '已停止');
+        }
+
+        function prevSentence() {
+            if (!state.isPlaying && state.sentences.length === 0) return;
+            
+            if (state.currentIndex <= 0) {
+                showToast('已经是第一句了');
+                return;
+            }
+
+            state.stopRequested = true; // Stop current word loop
+            setTimeout(() => {
+                state.currentIndex--;
+                state.stopRequested = false;
+                state.isPlaying = true;
+                state.isPaused = false;
+                updatePauseButtonUI();
+                playCurrentSentence();
+            }, 100);
+        }
+
+        function nextSentence() {
+            if (state.sentences.length === 0) return;
+
+            if (state.currentIndex >= state.sentences.length - 1) {
+                stopCurrent();
+                showToast('朗读结束');
+                updateStatus('bg-gray-500', '朗读结束');
+                return;
+            }
+
+            // If called automatically from playCurrentSentence, stopRequested is already false
+            // If called manually via button:
+            if (!state.stopRequested) {
+                state.stopRequested = true;
+                setTimeout(() => {
+                    state.currentIndex++;
+                    state.stopRequested = false;
+                    playCurrentSentence();
+                }, 100);
+            } else {
+                // Logic for auto-next
+                state.currentIndex++;
+                playCurrentSentence();
+            }
+        }
+
+        function replaySentence() {
+            if (!state.isPlaying && state.sentences.length === 0) return;
+            
+            state.stopRequested = true;
+            setTimeout(() => {
+                state.stopRequested = false;
+                state.isPaused = false;
+                updatePauseButtonUI();
+                playCurrentSentence();
+            }, 100);
+        }
+
+        function togglePause() {
+            if (!state.isPlaying) return;
+
+            state.isPaused = !state.isPaused;
+            updatePauseButtonUI();
+
+            if (state.isPaused) {
+                window.speechSynthesis.cancel(); // Stop audio immediately
+                updateStatus('bg-yellow-500', '已暂停');
+            } else {
+                updateStatus('bg-green-500', '正在朗读...');
+                // Resume logic handled inside playCurrentSentence loop
+            }
+        }
+
+        function updatePauseButtonUI() {
+            if (state.isPaused) {
+                els.iconPause.classList.add('hidden');
+                els.iconPlay.classList.remove('hidden');
+                els.btnPause.classList.replace('bg-blue-600', 'bg-green-600');
+                els.btnPause.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+                els.btnPause.title = "继续朗读";
+            } else {
+                els.iconPause.classList.remove('hidden');
+                els.iconPlay.classList.add('hidden');
+                els.btnPause.classList.replace('bg-green-600', 'bg-blue-600');
+                els.btnPause.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+                els.btnPause.title = "暂停朗读";
+            }
+        }
+
+        /**
+         * Settings & Event Listeners
+         */
+        function applySettings() {
+            // Rate
+            const activeRateBtn = document.querySelector('.speed-btn.border-purple-500');
+            if (activeRateBtn) {
+                config.rate = parseFloat(activeRateBtn.dataset.rate);
+            }
+            
+            // Pauses
+            config.wordPause = parseInt(els.rangeWordPause.value, 10);
+            config.sentencePause = parseInt(els.rangeSentencePause.value, 10);
+
+            // Shortcuts
+            config.shortcuts.prev = els.keyPrev.value.toLowerCase();
+            config.shortcuts.replay = els.keyReplay.value.toLowerCase();
+            config.shortcuts.next = els.keyNext.value.toLowerCase();
+        }
+
+        function setupEventListeners() {
+            // Start Button
+            els.btnStart.addEventListener('click', startReading);
+
+            // Controls
+            els.btnPrev.addEventListener('click', prevSentence);
+            els.btnNext.addEventListener('click', nextSentence);
+            els.btnReplay.addEventListener('click', replaySentence);
+            els.btnPause.addEventListener('click', togglePause);
+
+            // Input Status
+            els.input.addEventListener('input', () => {
+                if (els.input.value.trim().length > 0) {
+                    els.inputStatus.textContent = '已输入 ' + els.input.value.trim().length + ' 字';
+                    els.inputStatus.classList.add('text-purple-400');
+                } else {
+                    els.inputStatus.textContent = '等待输入...';
+                    els.inputStatus.classList.remove('text-purple-400');
+                }
+            });
+
+            // Settings Toggle
+            els.toggleSettings.addEventListener('click', () => {
+                const isHidden = els.settingsContent.classList.contains('hidden');
+                if (isHidden) {
+                    els.settingsContent.classList.remove('hidden');
+                    els.settingsArrow.style.transform = 'rotate(180deg)';
+                } else {
+                    els.settingsContent.classList.add('hidden');
+                    els.settingsArrow.style.transform = 'rotate(0deg)';
+                }
+            });
+
+            // Speed Buttons
+            els.speedBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Reset styles
+                    els.speedBtns.forEach(b => {
+                        b.classList.remove('border-purple-500', 'bg-purple-900/30', 'text-purple-300');
+                        b.classList.add('border-gray-600');
+                    });
+                    // Set active style
+                    btn.classList.remove('border-gray-600');
+                    btn.classList.add('border-purple-500', 'bg-purple-900/30', 'text-purple-300');
+                });
+            });
+
+            // Range Sliders
+            els.rangeWordPause.addEventListener('input', (e) => {
+                els.valWordPause.textContent = e.target.value;
+            });
+            els.rangeSentencePause.addEventListener('input', (e) => {
+                els.valSentencePause.textContent = e.target.value;
+            });
+
+            // Shortcut Binding
+            const bindKey = (inputEl) => {
+                inputEl.addEventListener('focus', () => {
+                    inputEl.value = '';
+                    inputEl.placeholder = '按下按键...';
+                });
+
+                inputEl.addEventListener('keydown', (e) => {
+                    e.preventDefault();
+                    let key = e.key;
+                    if (key === ' ') key = 'Space';
+                    inputEl.value = key;
+                    inputEl.placeholder = key;
+                    inputEl.blur();
+                    showToast(`已绑定: ${key}`);
+                });
+            };
+
+            bindKey(els.keyPrev);
+            bindKey(els.keyReplay);
+            bindKey(els.keyNext);
+
+            // Global Keyboard Shortcuts
+            document.addEventListener('keydown', (e) => {
+                // Ignore if typing in input or textarea
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+                const key = e.key.toLowerCase();
+                const shortcuts = config.shortcuts;
+
+                if (key === shortcuts.prev) {
+                    e.preventDefault();
+                    prevSentence();
+                } else if (key === shortcuts.replay) {
+                    e.preventDefault();
+                    replaySentence();
+                } else if (key === shortcuts.next) {
+                    e.preventDefault();
+                    nextSentence();
+                } else if (key === shortcuts.pause || key === ' ') {
+                    e.preventDefault();
+                    togglePause();
+                }
+            });
+        }
+
+        // Initialize
+        setupEventListeners();
+
+    </script>
+</body>
+</html>
