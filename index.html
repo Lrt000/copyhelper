@@ -70,8 +70,10 @@
 <main class="w-full max-w-3xl space-y-6">
 <!-- Header -->
 <header class="text-center space-y-2">
-<h1 class="text-3xl font-bold tracking-wide text-white">抄写助手</h1>
-<p class="text-gray-400 text-sm">分句朗读 · 慢速跟读 · 键盘控制</p>
+    <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
+        抄写助手
+    </h1>
+    <p class="text-gray-400 text-sm md:text-base">分句朗读 · 慢速跟读 · 键盘控制</p>
 </header>
 
 <!-- Input Section -->
@@ -435,9 +437,20 @@
          */
         function generatePrompt(article) {
             return `请对以下文章进行智能分词朗读标记。规则如下：
-1. 在需要短暂停顿的位置插入两个星号：**
+1. 在需要短暂停顿的位置（如词语之间、意群之间）插入两个星号：**
 2. 在需要较长停顿或分段的位置插入两个井号：##
-3. 保持原文所有文字和标点不变
+3. 保持原文所有文字和标点不变，只插入标记
+示例：
+原文：今天天气真好我们出去玩吧
+标记后：今天**天气**真好##我们**出去**玩吧
+
+原文：床前明月光疑是地上霜举头望明月低头思故乡
+标记后：床前**明月**光**疑是**地上**霜##举头**望**明月**低头**思**故乡
+
+注意：
+**用于短停顿（词语间、意群间）
+##用于长停顿（句子间、段落间）
+不要改变原文的任何文字和标点
 
 文章内容：
 ${article}`;
